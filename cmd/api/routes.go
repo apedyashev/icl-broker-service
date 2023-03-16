@@ -33,6 +33,7 @@ func (app *Config) routes() http.Handler {
 	mux.Route("/api/auth", func(r chi.Router) {
 		r.Post("/login", handlers.Login)
 		r.Post("/register", handlers.Register)
+
 	})
 
 	// Protected routes
@@ -48,7 +49,9 @@ func (app *Config) routes() http.Handler {
 		r.Use(middlewares.IsUserEnabled)
 
 		r.Get("/api/auth/user", handlers.GetCurrentUser)
+
 	})
+	mux.Post("/api/image/upload", handlers.UploadImage)
 
 	return mux
 }
