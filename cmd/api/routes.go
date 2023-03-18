@@ -11,6 +11,12 @@ func NewRouter(e *echo.Echo) *echo.Echo {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// auth routes
+	authController := api.NewAuthController()
+	g := e.Group("/api/auth")
+	g.POST("/login", authController.Login)
+	g.POST("/register", authController.Register)
+
 	postController := api.NewPostController()
 	e.GET("/api/users/:userId/posts", postController.UserPosts)
 	e.GET("/api/posts/:id", postController.PostById)

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"icl-broker/pkg/adapter/clients"
+	infraService "icl-broker/pkg/adapter/infra-service"
 	"icl-broker/pkg/domain"
 	"icl-broker/pkg/model"
 	"log"
@@ -15,12 +15,12 @@ import (
 )
 
 type postRepository struct {
-	httpClient clients.HttpClient
+	httpClient infraService.HttpClient
 }
 
 func NewPostRepository() domain.PostRepository {
 	return &postRepository{
-		httpClient: clients.NewHttpClient(),
+		httpClient: infraService.NewHttpClient(),
 	}
 }
 
@@ -33,7 +33,7 @@ type PostCreateResponseDTO struct {
 }
 
 func (r *postRepository) UserPosts(userId uint, qp *domain.PostsFiltersDTO) ([]*domain.PostCompact, error) {
-	BeforeDecode := func(response *http.Response) error {
+	OnResponse := func(response *http.Response) error {
 		fmt.Println("status code", response.StatusCode)
 		if response.StatusCode != http.StatusOK {
 			return errors.New(fmt.Sprintf("Response to posts-service/posts failed: status=%d", response.StatusCode))
@@ -46,9 +46,9 @@ func (r *postRepository) UserPosts(userId uint, qp *domain.PostsFiltersDTO) ([]*
 	q := domain.ListPostParamsToUrlValues(qp)
 	q.Add("user_id", fmt.Sprint(userId))
 
-	err := r.httpClient.Get(postUrl, &clients.GetConfig{
-		BeforeDecode: BeforeDecode,
-		QueryParams:  q,
+	err := r.httpClient.Get(postUrl, &infraService.GetConfig{
+		OnResponse:  OnResponse,
+		QueryParams: q,
 	}, &postsFromSrvs)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (r *postRepository) Update(post *domain.ServicePost) (*domain.PostDetailed,
 		return nil, err
 	}
 
-	err = r.httpClient.Put(postUrl, &clients.PutConfig{
+	err = r.httpClient.Put(postUrl, &infraService.PutConfig{
 		OnResponse: OnResponse,
 		Body:       changes,
 	}, &postsFromSrvs)
@@ -136,7 +136,7 @@ func (r *postRepository) AddImage(postId string, image *model.Image) error {
 }
 
 func (r *postRepository) PostById(postId uint) (*model.Post, error) {
-	BeforeDecode := func(response *http.Response) error {
+	OnResponse := func(response *http.Response) error {
 		if response.StatusCode != http.StatusOK {
 			return errors.New(fmt.Sprintf("Response to posts-service/posts failed: status=%d", response.StatusCode))
 		}
@@ -144,8 +144,8 @@ func (r *postRepository) PostById(postId uint) (*model.Post, error) {
 	}
 	var post model.Post
 	var postUrl = fmt.Sprintf("http://posts-service/posts/%d", postId)
-	err := r.httpClient.Get(postUrl, &clients.GetConfig{
-		BeforeDecode: BeforeDecode,
+	err := r.httpClient.Get(postUrl, &infraService.GetConfig{
+		OnResponse: OnResponse,
 	}, &post)
 	if err != nil {
 		return nil, err

@@ -27,3 +27,16 @@ type ServicePost struct {
 	Images      []string  `json:"images"`
 	// Comments    []Comment      `json:"comments"`
 }
+
+// User
+type LoginCredentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type RegisterRequestBody struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
