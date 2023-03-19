@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"icl-broker/pkg/adapter/rest"
 	"log"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 const webPort = "80"
@@ -17,7 +18,7 @@ func main() {
 	log.Printf("Starting broker on port %s\n", webPort)
 
 	e := echo.New()
-	e = NewRouter(e)
+	e = rest.NewRouter(e)
 
 	fmt.Println("Server listen at http://localhost:80")
 	if err := e.Start(":80"); err != nil {

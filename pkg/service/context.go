@@ -8,4 +8,6 @@ type Context interface {
 	JSON(code int, i interface{}) error
 	// Param returns path parameter by name.
 	Param(name string) string
+	// Get retrieves data from the context.
+	Get(key string) interface{}
 }

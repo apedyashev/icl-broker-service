@@ -87,3 +87,30 @@ func (r *userRepository) Create(u *domain.RegisterRequestBody) (*model.User, err
 	fmt.Printf("user %+v", user)
 	return &user, nil
 }
+
+func (r *userRepository) UserById(uid uint) (*model.User, error) {
+	OnResponse := func(response *http.Response) error {
+		fmt.Println("status code", response.StatusCode)
+		if response.StatusCode != http.StatusOK {
+			return errors.New(
+				fmt.Sprintf("Response to auth-service/api/user/%d failed: status=%d", uid, response.StatusCode),
+			)
+		}
+		return nil
+	}
+
+	svcUrl := fmt.Sprintf("http://auth-service/api/user/%d", uid)
+	log.Println("calling", svcUrl)
+
+	var user model.User
+	err := r.httpClient.Get(svcUrl, &infraService.GetConfig{
+		OnResponse: OnResponse,
+	}, &user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("user %+v", user)
+	return &user, nil
+}

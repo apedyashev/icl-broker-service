@@ -4,6 +4,7 @@ import "icl-broker/pkg/model"
 
 type UserService interface {
 	UserByCredentials(c *LoginCredentials) (*model.User, error)
+	UserById(uid uint) (*model.User, error)
 	UserToken(u *model.User) (string, error)
 	RegisterUser(u *RegisterRequestBody) (*model.User, error)
 }
@@ -19,6 +20,10 @@ func NewUserService(userRepository UserRepository, tokenService TokenService) Us
 
 func (s *userService) UserByCredentials(c *LoginCredentials) (*model.User, error) {
 	return s.userRepository.UserByCredentials(c)
+}
+
+func (s *userService) UserById(uid uint) (*model.User, error) {
+	return s.userRepository.UserById(uid)
 }
 
 func (s *userService) UserToken(u *model.User) (string, error) {
