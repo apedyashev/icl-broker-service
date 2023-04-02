@@ -40,6 +40,7 @@ func (r *imageRepository) Create(imageCreateDto *domain.ImageCreateDTO) (*model.
 	if err != nil {
 		return nil, err
 	}
+	defer imageRpcClient.Close()
 
 	rpcPayload := imageUploadRPCPayload{
 		PostId:    imageCreateDto.PostId,

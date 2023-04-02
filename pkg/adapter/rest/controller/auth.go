@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"icl-broker/pkg/adapter/grpc"
 	infraService "icl-broker/pkg/adapter/infra-service"
 	"icl-broker/pkg/adapter/repository"
 	"icl-broker/pkg/domain"
@@ -19,11 +20,11 @@ type authController struct {
 	authService service.Auth
 }
 
-func NewAuthController() AuthController {
+func NewAuthController(authGrpcClients *grpc.GRPCAuthClients) AuthController {
 	return &authController{
 		authService: service.NewAuthService(
 			domain.NewUserService(
-				repository.NewUserRepository(),
+				repository.NewUserRepository(authGrpcClients.User),
 				infraService.NewJwtService(),
 			),
 		),

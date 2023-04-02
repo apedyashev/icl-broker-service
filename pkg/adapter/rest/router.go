@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"icl-broker/pkg/adapter/grpc"
 	"icl-broker/pkg/adapter/rest/controller"
 	appMiddleware "icl-broker/pkg/adapter/rest/middleware"
 	"os"
@@ -16,8 +17,23 @@ func NewRouter(e *echo.Echo) *echo.Echo {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	authClients := grpc.NewAuthClients()
+
+	// var authRpcClient *rpc.Client
+	// for {
+	// 	client, err := rpc.Dial("tcp", "auth-service:5001")
+	// 	if err != nil {
+	// 		log.Error("Couldn't connect to AUTH server, backing off", err)
+	// 		time.Sleep(2 * time.Second)
+	// 	}
+	// 	authRpcClient = client
+	// 	if client != nil {
+	// 		break
+	// 	}
+	// }
+
 	// auth routes
-	authController := controller.NewAuthController()
+	authController := controller.NewAuthController(authClients)
 	g := e.Group("/api/auth")
 	g.POST("/login", authController.Login)
 	g.POST("/register", authController.Register)
@@ -31,7 +47,8 @@ func NewRouter(e *echo.Echo) *echo.Echo {
 	e.POST("/api/posts/:id/images", postController.AddImageToPost)
 
 	// protected routes
-	userController := controller.NewUserController()
+
+	userController := controller.NewUserController(authClients)
 	prg := e.Group("/api/auth")
 	{
 		prg.Use(echojwt.JWT([]byte(jwtSecret)))

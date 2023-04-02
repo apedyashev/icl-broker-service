@@ -1,116 +1,89 @@
 package repository
 
 import (
-	"encoding/json"
-	"errors"
+	"context"
 	"fmt"
+	"icl-broker/pkg/adapter/grpc/pb"
 	infraService "icl-broker/pkg/adapter/infra-service"
 	"icl-broker/pkg/domain"
 	"icl-broker/pkg/model"
-	"log"
-	"net/http"
 )
 
 type userRepository struct {
-	httpClient infraService.HttpClient
+	httpClient     infraService.HttpClient
+	authGrpcClient pb.UserServiceClient
 }
 
-func NewUserRepository() domain.UserRepository {
+func NewUserRepository(authGrpcClient pb.UserServiceClient) domain.UserRepository {
 	return &userRepository{
-		httpClient: infraService.NewHttpClient(),
+		httpClient:     infraService.NewHttpClient(),
+		authGrpcClient: authGrpcClient,
 	}
 }
 
 func (r *userRepository) UserByCredentials(cred *domain.LoginCredentials) (*model.User, error) {
-	OnResponse := func(response *http.Response) error {
-		fmt.Println("status code", response.StatusCode)
-		if response.StatusCode != http.StatusOK {
-			return errors.New(
-				fmt.Sprintf("Response to auth-service/auth/login failed: status=%d", response.StatusCode),
-			)
-		}
-		return nil
-	}
-
-	var postUrl = "http://auth-service/api/auth/login"
-	log.Println("calling", postUrl)
-
-	body, err := json.Marshal(cred)
+	respUser, err := r.authGrpcClient.GetByCredentials(context.Background(), &pb.GetByCredentialsRequest{
+		Email:    cred.Email,
+		Password: cred.Password,
+	})
 	if err != nil {
+		fmt.Println("error calling auth auth:GetByCredentials via gRPC", err)
 		return nil, err
 	}
 
-	var user model.User
-	err = r.httpClient.Post(postUrl, &infraService.PostConfig{
-		OnResponse: OnResponse,
-		Body:       body,
-	}, &user)
-
-	if err != nil {
-		return nil, err
+	// TODO: create a mapper to convert pb.User to models.User
+	user := model.User{
+		ID:        uint(respUser.ID),
+		Name:      respUser.Name,
+		Username:  respUser.Username,
+		Email:     respUser.Email,
+		CreatedAt: respUser.CreatedAt.AsTime(),
+		UpdatedAt: respUser.UpdatedAt.AsTime(),
 	}
-
-	fmt.Printf("user %+v", user)
 	return &user, nil
 }
 
 func (r *userRepository) Create(u *domain.RegisterRequestBody) (*model.User, error) {
-	OnResponse := func(response *http.Response) error {
-		fmt.Println("status code", response.StatusCode)
-		if response.StatusCode != http.StatusCreated {
-			return errors.New(
-				fmt.Sprintf("Response to auth-service/auth/register failed: status=%d", response.StatusCode),
-			)
-		}
-		return nil
-	}
-
-	var postUrl = "http://auth-service/api/auth/register"
-	log.Printf("calling %s with %+v", postUrl, u)
-
-	body, err := json.Marshal(u)
+	respUser, err := r.authGrpcClient.Create(context.TODO(), &pb.CreateRequest{
+		Name:     u.Name,
+		Username: u.Username,
+		Email:    u.Email,
+		Password: u.Password,
+	})
 	if err != nil {
+		fmt.Println("error calling auth auth:Create via gRPC", err)
 		return nil, err
 	}
 
-	var user model.User
-	err = r.httpClient.Post(postUrl, &infraService.PostConfig{
-		OnResponse: OnResponse,
-		Body:       body,
-	}, &user)
-
-	if err != nil {
-		fmt.Println("error after Post", err)
-		return nil, err
+	// TODO: create a mapper to convert pb.User to models.User
+	user := model.User{
+		ID:        uint(respUser.ID),
+		Name:      respUser.Name,
+		Username:  respUser.Username,
+		Email:     respUser.Email,
+		CreatedAt: respUser.CreatedAt.AsTime(),
+		UpdatedAt: respUser.UpdatedAt.AsTime(),
 	}
-
-	fmt.Printf("user %+v", user)
 	return &user, nil
 }
 
 func (r *userRepository) UserById(uid uint) (*model.User, error) {
-	OnResponse := func(response *http.Response) error {
-		fmt.Println("status code", response.StatusCode)
-		if response.StatusCode != http.StatusOK {
-			return errors.New(
-				fmt.Sprintf("Response to auth-service/api/user/%d failed: status=%d", uid, response.StatusCode),
-			)
-		}
-		return nil
-	}
-
-	svcUrl := fmt.Sprintf("http://auth-service/api/user/%d", uid)
-	log.Println("calling", svcUrl)
-
-	var user model.User
-	err := r.httpClient.Get(svcUrl, &infraService.GetConfig{
-		OnResponse: OnResponse,
-	}, &user)
-
+	respUser, err := r.authGrpcClient.GetById(context.Background(), &pb.GetByIdRequest{
+		ID: uint64(uid),
+	})
 	if err != nil {
+		fmt.Println("error calling auth auth:GetById via gRPC", err)
 		return nil, err
 	}
 
-	fmt.Printf("user %+v", user)
+	// TODO: create a mapper to convert pb.User to models.User
+	user := model.User{
+		ID:        uint(respUser.ID),
+		Name:      respUser.Name,
+		Username:  respUser.Username,
+		Email:     respUser.Email,
+		CreatedAt: respUser.CreatedAt.AsTime(),
+		UpdatedAt: respUser.UpdatedAt.AsTime(),
+	}
 	return &user, nil
 }

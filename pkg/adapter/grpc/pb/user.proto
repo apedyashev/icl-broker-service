@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package pb;
+
+option go_package = "icl-auth/pkg/adapter/grpc/pb";
+
+service UserService {
+    rpc GetByCredentials(GetByCredentialsRequest) returns (User) {}
+    rpc Create(CreateRequest) returns (User) {}
+    rpc GetById(GetByIdRequest) returns (User) {}
+}
+
+message GetByCredentialsRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message CreateRequest {
+    string Name = 2;
+	string Username = 3;
+	string Email = 4;
+	string Password = 5;
+    // string ConfirmPassword = 6;
+}
+
+message GetByIdRequest {
+    uint64 ID = 1;
+}
+
+message User {
+    uint64 ID = 1;
+	string Name = 2;
+	string Username = 3;
+	string Email = 4;
+	google.protobuf.Timestamp CreatedAt = 5;
+	google.protobuf.Timestamp UpdatedAt = 6;
+}
